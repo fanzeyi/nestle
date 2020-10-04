@@ -1,2 +1,2 @@
 [workspace]
-members = ["nestle_ines"]
+members = ["nestle_ines", "nestle_cpu", "asm6502", "asm6502_derive"]
