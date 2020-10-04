@@ -1,21 +1,206 @@
 use asm6502_derive::Asm6502;
+use enum_dispatch::enum_dispatch;
 
 #[derive(Debug, PartialEq)]
 pub enum AddressMode {
     Implicit,
     Accumulator,
     Immediate(u8),
-    // zero page
     Zero(u8),
     ZeroX(u8),
     ZeroY(u8),
-    Relative(u8),
+    Relative(i8),
     Absolute(u16),
     AbsoluteX(u16),
     AbsoluteY(u16),
     Indirect(u16),
     IndirectX(u8),
     IndirectY(u8),
+}
+
+impl AddressMode {
+    pub fn size(&self) -> u8 {
+        use AddressMode::*;
+        match self {
+            Implicit => 1,
+            Accumulator => 1,
+            Immediate(u8) => 2,
+            Zero(u8) => 2,
+            ZeroX(u8) => 2,
+            ZeroY(u8) => 2,
+            Relative(i8) => 2,
+            Absolute(u16) => 3,
+            AbsoluteX(u16) => 3,
+            AbsoluteY(u16) => 3,
+            Indirect(u16) => 3,
+            IndirectX(u8) => 2,
+            IndirectY(u8) => 2,
+        }
+    }
+}
+
+pub trait InstructionConstruct {
+    fn from_peekable<'a, I: Iterator<Item = &'a u8> + 'a>(
+        bytes: &mut std::iter::Peekable<I>,
+    ) -> Option<Self>
+    where
+        Self: Sized;
+
+    fn from_bytes(bytes: &[u8]) -> Option<Self>
+    where
+        Self: Sized,
+    {
+        Self::from_peekable(&mut bytes.iter().peekable())
+    }
+
+    fn name(&self) -> &'static str;
+}
+
+#[enum_dispatch]
+pub trait Instruction: std::fmt::Display {
+    fn format(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}", self)
+    }
+
+    fn size(&self) -> u8;
+}
+
+#[enum_dispatch(Instruction)]
+pub enum Opcode {
+    ADC(ADC),
+    AND(AND),
+    ASL(ASL),
+    BCC(BCC),
+    BCS(BCS),
+    BEQ(BEQ),
+    BIT(BIT),
+    BMI(BMI),
+    BNE(BNE),
+    BPL(BPL),
+    BRK(BRK),
+    BVC(BVC),
+    BVS(BVS),
+    CLC(CLC),
+    CLD(CLD),
+    CLI(CLI),
+    CLV(CLV),
+    CMP(CMP),
+    CPX(CPX),
+    CPY(CPY),
+    DEC(DEC),
+    DEX(DEX),
+    DEY(DEY),
+    EOR(EOR),
+    INC(INC),
+    INX(INX),
+    INY(INY),
+    JMP(JMP),
+    JSR(JSR),
+    LDA(LDA),
+    LDX(LDX),
+    LDY(LDY),
+    LSR(LSR),
+    NOP(NOP),
+    ORA(ORA),
+    PHA(PHA),
+    PHP(PHP),
+    PLA(PLA),
+    PLP(PLP),
+    ROL(ROL),
+    ROR(ROR),
+    RTI(RTI),
+    RTS(RTS),
+    SBC(SBC),
+    SEC(SEC),
+    SED(SED),
+    SEI(SEI),
+    STA(STA),
+    STX(STX),
+    STY(STY),
+    TAX(TAX),
+    TAY(TAY),
+    TSX(TSX),
+    TXA(TXA),
+    TXS(TXS),
+    TYA(TYA),
+}
+
+impl std::fmt::Display for Opcode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.format(f)
+    }
+}
+
+macro_rules! try_from_peekable {
+    ($input: ident, $id: tt) => {
+        if let Some(op) = $id::from_peekable($input) {
+            return Some(Self::$id(op));
+        }
+    };
+}
+
+impl Opcode {
+    pub fn from_peekable<'a, I: Iterator<Item = &'a u8> + 'a>(
+        bytes: &mut std::iter::Peekable<I>,
+    ) -> Option<Self> {
+        try_from_peekable!(bytes, ADC);
+        try_from_peekable!(bytes, AND);
+        try_from_peekable!(bytes, ASL);
+        try_from_peekable!(bytes, BCC);
+        try_from_peekable!(bytes, BCS);
+        try_from_peekable!(bytes, BEQ);
+        try_from_peekable!(bytes, BIT);
+        try_from_peekable!(bytes, BMI);
+        try_from_peekable!(bytes, BNE);
+        try_from_peekable!(bytes, BPL);
+        try_from_peekable!(bytes, BRK);
+        try_from_peekable!(bytes, BVC);
+        try_from_peekable!(bytes, BVS);
+        try_from_peekable!(bytes, CLC);
+        try_from_peekable!(bytes, CLD);
+        try_from_peekable!(bytes, CLI);
+        try_from_peekable!(bytes, CLV);
+        try_from_peekable!(bytes, CMP);
+        try_from_peekable!(bytes, CPX);
+        try_from_peekable!(bytes, CPY);
+        try_from_peekable!(bytes, DEC);
+        try_from_peekable!(bytes, DEX);
+        try_from_peekable!(bytes, DEY);
+        try_from_peekable!(bytes, EOR);
+        try_from_peekable!(bytes, INC);
+        try_from_peekable!(bytes, INX);
+        try_from_peekable!(bytes, INY);
+        try_from_peekable!(bytes, JMP);
+        try_from_peekable!(bytes, JSR);
+        try_from_peekable!(bytes, LDA);
+        try_from_peekable!(bytes, LDX);
+        try_from_peekable!(bytes, LDY);
+        try_from_peekable!(bytes, LSR);
+        try_from_peekable!(bytes, NOP);
+        try_from_peekable!(bytes, ORA);
+        try_from_peekable!(bytes, PHA);
+        try_from_peekable!(bytes, PHP);
+        try_from_peekable!(bytes, PLA);
+        try_from_peekable!(bytes, PLP);
+        try_from_peekable!(bytes, ROL);
+        try_from_peekable!(bytes, ROR);
+        try_from_peekable!(bytes, RTI);
+        try_from_peekable!(bytes, RTS);
+        try_from_peekable!(bytes, SBC);
+        try_from_peekable!(bytes, SEC);
+        try_from_peekable!(bytes, SED);
+        try_from_peekable!(bytes, SEI);
+        try_from_peekable!(bytes, STA);
+        try_from_peekable!(bytes, STX);
+        try_from_peekable!(bytes, STY);
+        try_from_peekable!(bytes, TAX);
+        try_from_peekable!(bytes, TAY);
+        try_from_peekable!(bytes, TSX);
+        try_from_peekable!(bytes, TXA);
+        try_from_peekable!(bytes, TXS);
+        try_from_peekable!(bytes, TYA);
+        None
+    }
 }
 
 #[derive(Asm6502, Debug, PartialEq)]
@@ -29,7 +214,7 @@ pub enum AddressMode {
     indirect_x = 0x61,
     indirect_y = 0x71
 )]
-struct ADC(AddressMode);
+pub struct ADC(AddressMode);
 
 #[derive(Asm6502, Debug, PartialEq)]
 #[asm6502(
@@ -42,7 +227,7 @@ struct ADC(AddressMode);
     indirect_x = 0x21,
     indirect_y = 0x31
 )]
-struct AND(AddressMode);
+pub struct AND(AddressMode);
 
 #[derive(Asm6502, Debug, PartialEq)]
 #[asm6502(
@@ -52,62 +237,62 @@ struct AND(AddressMode);
     absolute = 0x0E,
     absolute_x = 0x1E
 )]
-struct ASL(AddressMode);
+pub struct ASL(AddressMode);
 
 #[derive(Asm6502, Debug, PartialEq)]
 #[asm6502(relative = 0x90)]
-struct BCC(AddressMode);
+pub struct BCC(AddressMode);
 
 #[derive(Asm6502, Debug, PartialEq)]
 #[asm6502(relative = 0xB0)]
-struct BCS(AddressMode);
+pub struct BCS(AddressMode);
 
 #[derive(Asm6502, Debug, PartialEq)]
 #[asm6502(relative = 0xF0)]
-struct BEQ(AddressMode);
+pub struct BEQ(AddressMode);
 
 #[derive(Asm6502, Debug, PartialEq)]
 #[asm6502(zero = 0x24, absolute = 0x2C)]
-struct BIT(AddressMode);
+pub struct BIT(AddressMode);
 
 #[derive(Asm6502, Debug, PartialEq)]
 #[asm6502(relative = 0x30)]
-struct BMI(AddressMode);
+pub struct BMI(AddressMode);
 
 #[derive(Asm6502, Debug, PartialEq)]
 #[asm6502(relative = 0xD0)]
-struct BNE(AddressMode);
+pub struct BNE(AddressMode);
 
 #[derive(Asm6502, Debug, PartialEq)]
 #[asm6502(relative = 0x10)]
-struct BPL(AddressMode);
+pub struct BPL(AddressMode);
 #[derive(Asm6502, Debug, PartialEq)]
 #[asm6502(implicit = 0x00)]
-struct BRK(AddressMode);
+pub struct BRK(AddressMode);
 
 #[derive(Asm6502, Debug, PartialEq)]
 #[asm6502(relative = 0x50)]
-struct BVC(AddressMode);
+pub struct BVC(AddressMode);
 
 #[derive(Asm6502, Debug, PartialEq)]
 #[asm6502(relative = 0x70)]
-struct BVS(AddressMode);
+pub struct BVS(AddressMode);
 
 #[derive(Asm6502, Debug, PartialEq)]
 #[asm6502(implicit = 0x18)]
-struct CLC(AddressMode);
+pub struct CLC(AddressMode);
 
 #[derive(Asm6502, Debug, PartialEq)]
 #[asm6502(implicit = 0xD8)]
-struct CLD(AddressMode);
+pub struct CLD(AddressMode);
 
 #[derive(Asm6502, Debug, PartialEq)]
 #[asm6502(implicit = 0x58)]
-struct CLI(AddressMode);
+pub struct CLI(AddressMode);
 
 #[derive(Asm6502, Debug, PartialEq)]
 #[asm6502(implicit = 0xB8)]
-struct CLV(AddressMode);
+pub struct CLV(AddressMode);
 
 #[derive(Asm6502, Debug, PartialEq)]
 #[asm6502(
@@ -120,27 +305,27 @@ struct CLV(AddressMode);
     indirect_x = 0xC1,
     indirect_y = 0xD1
 )]
-struct CMP(AddressMode);
+pub struct CMP(AddressMode);
 
 #[derive(Asm6502, Debug, PartialEq)]
 #[asm6502(immediate = 0xE0, zero = 0xE4, absolute = 0xEC)]
-struct CPX(AddressMode);
+pub struct CPX(AddressMode);
 
 #[derive(Asm6502, Debug, PartialEq)]
 #[asm6502(immediate = 0xC0, zero = 0xC4, absolute = 0xCC)]
-struct CPY(AddressMode);
+pub struct CPY(AddressMode);
 
 #[derive(Asm6502, Debug, PartialEq)]
 #[asm6502(zero = 0xC6, zero_x = 0xD6, absolute = 0xCE, absolute_x = 0xDE)]
-struct DEC(AddressMode);
+pub struct DEC(AddressMode);
 
 #[derive(Asm6502, Debug, PartialEq)]
 #[asm6502(implicit = 0xCA)]
-struct DEX(AddressMode);
+pub struct DEX(AddressMode);
 
 #[derive(Asm6502, Debug, PartialEq)]
 #[asm6502(implicit = 0x88)]
-struct DEY(AddressMode);
+pub struct DEY(AddressMode);
 
 #[derive(Asm6502, Debug, PartialEq)]
 #[asm6502(
@@ -153,27 +338,27 @@ struct DEY(AddressMode);
     indirect_x = 0x41,
     indirect_y = 0x51
 )]
-struct EOR(AddressMode);
+pub struct EOR(AddressMode);
 
 #[derive(Asm6502, Debug, PartialEq)]
 #[asm6502(zero = 0xE6, zero_x = 0xF6, absolute = 0xEE, absolute_x = 0xFE)]
-struct INC(AddressMode);
+pub struct INC(AddressMode);
 
 #[derive(Asm6502, Debug, PartialEq)]
 #[asm6502(implicit = 0xE8)]
-struct INX(AddressMode);
+pub struct INX(AddressMode);
 
 #[derive(Asm6502, Debug, PartialEq)]
 #[asm6502(implicit = 0xC8)]
-struct INY(AddressMode);
+pub struct INY(AddressMode);
 
 #[derive(Asm6502, Debug, PartialEq)]
 #[asm6502(absolute = 0x4C, indirect = 0x6C)]
-struct JMP(AddressMode);
+pub struct JMP(AddressMode);
 
 #[derive(Asm6502, Debug, PartialEq)]
 #[asm6502(absolute = 0x20)]
-struct JSR(AddressMode);
+pub struct JSR(AddressMode);
 
 #[derive(Asm6502, Debug, PartialEq)]
 #[asm6502(
@@ -186,7 +371,7 @@ struct JSR(AddressMode);
     indirect_x = 0xA1,
     indirect_y = 0xB1
 )]
-struct LDA(AddressMode);
+pub struct LDA(AddressMode);
 
 #[derive(Asm6502, Debug, PartialEq)]
 #[asm6502(
@@ -196,7 +381,7 @@ struct LDA(AddressMode);
     absolute = 0xAE,
     absolute_y = 0xBE
 )]
-struct LDX(AddressMode);
+pub struct LDX(AddressMode);
 
 #[derive(Asm6502, Debug, PartialEq)]
 #[asm6502(
@@ -206,7 +391,7 @@ struct LDX(AddressMode);
     absolute = 0xAC,
     absolute_x = 0xBC
 )]
-struct LDY(AddressMode);
+pub struct LDY(AddressMode);
 
 #[derive(Asm6502, Debug, PartialEq)]
 #[asm6502(
@@ -216,11 +401,11 @@ struct LDY(AddressMode);
     absolute = 0x4E,
     absolute_x = 0x5E
 )]
-struct LSR(AddressMode);
+pub struct LSR(AddressMode);
 
 #[derive(Asm6502, Debug, PartialEq)]
 #[asm6502(implicit = 0xEA)]
-struct NOP(AddressMode);
+pub struct NOP(AddressMode);
 
 #[derive(Asm6502, Debug, PartialEq)]
 #[asm6502(
@@ -233,23 +418,23 @@ struct NOP(AddressMode);
     indirect_x = 0x01,
     indirect_y = 0x11
 )]
-struct ORA(AddressMode);
+pub struct ORA(AddressMode);
 
 #[derive(Asm6502, Debug, PartialEq)]
 #[asm6502(implicit = 0x48)]
-struct PHA(AddressMode);
+pub struct PHA(AddressMode);
 
 #[derive(Asm6502, Debug, PartialEq)]
 #[asm6502(implicit = 0x08)]
-struct PHP(AddressMode);
+pub struct PHP(AddressMode);
 
 #[derive(Asm6502, Debug, PartialEq)]
 #[asm6502(implicit = 0x68)]
-struct PLA(AddressMode);
+pub struct PLA(AddressMode);
 
 #[derive(Asm6502, Debug, PartialEq)]
 #[asm6502(implicit = 0x28)]
-struct PLP(AddressMode);
+pub struct PLP(AddressMode);
 
 #[derive(Asm6502, Debug, PartialEq)]
 #[asm6502(
@@ -259,7 +444,7 @@ struct PLP(AddressMode);
     absolute = 0x2E,
     absolute_x = 0x3E
 )]
-struct ROL(AddressMode);
+pub struct ROL(AddressMode);
 
 #[derive(Asm6502, Debug, PartialEq)]
 #[asm6502(
@@ -269,15 +454,15 @@ struct ROL(AddressMode);
     absolute = 0x6E,
     absolute_x = 0x7E
 )]
-struct ROR(AddressMode);
+pub struct ROR(AddressMode);
 
 #[derive(Asm6502, Debug, PartialEq)]
 #[asm6502(implicit = 0x40)]
-struct RTI(AddressMode);
+pub struct RTI(AddressMode);
 
 #[derive(Asm6502, Debug, PartialEq)]
 #[asm6502(implicit = 0x60)]
-struct RTS(AddressMode);
+pub struct RTS(AddressMode);
 
 #[derive(Asm6502, Debug, PartialEq)]
 #[asm6502(
@@ -290,19 +475,19 @@ struct RTS(AddressMode);
     indirect_x = 0xE1,
     indirect_y = 0xF1
 )]
-struct SBC(AddressMode);
+pub struct SBC(AddressMode);
 
 #[derive(Asm6502, Debug, PartialEq)]
 #[asm6502(implicit = 0x38)]
-struct SEC(AddressMode);
+pub struct SEC(AddressMode);
 
 #[derive(Asm6502, Debug, PartialEq)]
 #[asm6502(implicit = 0xF8)]
-struct SED(AddressMode);
+pub struct SED(AddressMode);
 
 #[derive(Asm6502, Debug, PartialEq)]
 #[asm6502(implicit = 0x78)]
-struct SEI(AddressMode);
+pub struct SEI(AddressMode);
 
 #[derive(Asm6502, Debug, PartialEq)]
 #[asm6502(
@@ -314,38 +499,38 @@ struct SEI(AddressMode);
     indirect_x = 0x81,
     indirect_y = 0x91
 )]
-struct STA(AddressMode);
+pub struct STA(AddressMode);
 #[derive(Asm6502, Debug, PartialEq)]
 #[asm6502(zero = 0x86, zero_y = 0x96, absolute = 0x8E)]
-struct STX(AddressMode);
+pub struct STX(AddressMode);
 
 #[derive(Asm6502, Debug, PartialEq)]
 #[asm6502(zero = 0x84, zero_x = 0x94, absolute = 0x8C)]
-struct STY(AddressMode);
+pub struct STY(AddressMode);
 
 #[derive(Asm6502, Debug, PartialEq)]
 #[asm6502(implicit = 0xAA)]
-struct TAX(AddressMode);
+pub struct TAX(AddressMode);
 
 #[derive(Asm6502, Debug, PartialEq)]
 #[asm6502(implicit = 0xA8)]
-struct TAY(AddressMode);
+pub struct TAY(AddressMode);
 
 #[derive(Asm6502, Debug, PartialEq)]
 #[asm6502(implicit = 0xBA)]
-struct TSX(AddressMode);
+pub struct TSX(AddressMode);
 
 #[derive(Asm6502, Debug, PartialEq)]
 #[asm6502(implicit = 0x8A)]
-struct TXA(AddressMode);
+pub struct TXA(AddressMode);
 
 #[derive(Asm6502, Debug, PartialEq)]
 #[asm6502(implicit = 0x9A)]
-struct TXS(AddressMode);
+pub struct TXS(AddressMode);
 
 #[derive(Asm6502, Debug, PartialEq)]
 #[asm6502(implicit = 0x98)]
-struct TYA(AddressMode);
+pub struct TYA(AddressMode);
 
 #[test]
 fn test_adc() {

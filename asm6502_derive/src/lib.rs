@@ -79,7 +79,7 @@ impl Asm6502 {
         optype!(
             branches,
             self.relative,
-            AddressMode::Relative(*bytes.next().unwrap())
+            AddressMode::Relative(i8::from_le_bytes([*bytes.next().unwrap()]))
         );
         optype!(
             branches,
@@ -125,7 +125,7 @@ impl Asm6502 {
         );
 
         quote! {
-            fn from_peekable<'a, I: Iterator<Item = &'a u8> + 'a>(mut bytes: std::iter::Peekable<I>) -> Option<Self> {
+            fn from_peekable<'a, I: Iterator<Item = &'a u8> + 'a>(bytes: &mut std::iter::Peekable<I>) -> Option<Self> {
                 if let Some(&next) = bytes.peek() {
                     return match next {
                         #(#branches,)*
@@ -145,15 +145,17 @@ fn expand_derive(input: DeriveInput) -> Result<proc_macro2::TokenStream, Vec<syn
     let from_peekable = parsed.build_from_peekable();
 
     Ok(quote! {
-        impl #name {
+        impl InstructionConstruct for #name {
             #from_peekable
 
-            pub fn from_bytes(bytes: &[u8]) -> Option<Self> {
-                Self::from_peekable(bytes.iter().peekable())
-            }
-
-            pub fn name() -> &'static str {
+            fn name(&self) -> &'static str {
                 stringify!(#name)
+            }
+        }
+
+        impl Instruction for #name {
+            fn size(&self) -> u8 {
+                self.0.size()
             }
         }
 
@@ -161,17 +163,24 @@ fn expand_derive(input: DeriveInput) -> Result<proc_macro2::TokenStream, Vec<syn
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                 use AddressMode::*;
 
-                write!(f, "{}", Self::name())?;
+                write!(f, stringify!(#name))?;
 
                 match self.0 {
                     Implicit | Accumulator => write!(f, ""),
                     Immediate(a) => write!(f, " #${:02x}", a),
-                    Zero(a) | Relative(a) => write!(f, " ${:02x}", a),
-                    Absolute(a) | Indirect(a) => write!(f, " ${:02x}", a),
+                    Zero(a) => write!(f, " ${:02x}", a),
+                    Relative(a) => {
+                        if a < 0 {
+                            write!(f, " -${:02x}", -a)
+                        } else {
+                            write!(f, " ${:02x}", a)
+                        }
+                    },
+                    Absolute(a) | Indirect(a) => write!(f, " ${:04x}", a),
                     ZeroX(a) | IndirectX(a) => write!(f, " ${:02x}, X", a),
                     ZeroY(a) | IndirectY(a) => write!(f, " ${:02x}, Y", a),
-                    AbsoluteX(a) => write!(f, " ${:02x}, X", a),
-                    AbsoluteY(a) => write!(f, " ${:02x}, Y", a),
+                    AbsoluteX(a) => write!(f, " ${:04x}, X", a),
+                    AbsoluteY(a) => write!(f, " ${:04x}, Y", a),
                 }
             }
         }
