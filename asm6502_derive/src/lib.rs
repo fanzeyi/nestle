@@ -151,6 +151,29 @@ fn expand_derive(input: DeriveInput) -> Result<proc_macro2::TokenStream, Vec<syn
             pub fn from_bytes(bytes: &[u8]) -> Option<Self> {
                 Self::from_peekable(bytes.iter().peekable())
             }
+
+            pub fn name() -> &'static str {
+                stringify!(#name)
+            }
+        }
+
+        impl std::fmt::Display for #name {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                use AddressMode::*;
+
+                write!(f, "{}", Self::name())?;
+
+                match self.0 {
+                    Implicit | Accumulator => write!(f, ""),
+                    Immediate(a) => write!(f, " #${:02x}", a),
+                    Zero(a) | Relative(a) => write!(f, " ${:02x}", a),
+                    Absolute(a) | Indirect(a) => write!(f, " ${:02x}", a),
+                    ZeroX(a) | IndirectX(a) => write!(f, " ${:02x}, X", a),
+                    ZeroY(a) | IndirectY(a) => write!(f, " ${:02x}, Y", a),
+                    AbsoluteX(a) => write!(f, " ${:02x}, X", a),
+                    AbsoluteY(a) => write!(f, " ${:02x}, Y", a),
+                }
+            }
         }
     })
 }
