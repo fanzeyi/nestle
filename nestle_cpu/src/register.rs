@@ -13,11 +13,33 @@ bitflags! {
 }
 
 #[derive(Debug)]
-pub struct Register {
-    pc: u16,
-    stack: u8,
-    acc: u8,
-    idx_x: u8,
-    idx_y: u8,
+pub struct Registers {
+    pc: u16,   // 0x34
+    stack: u8, // 0xFD
+    acc: u8,   // 0
+    idx_x: u8, // 0
+    idx_y: u8, // 0
     status: Status,
+}
+
+impl Registers {
+    pub fn with_pc(pc: u16) -> Self {
+        Self {
+            pc,
+            ..Default::default()
+        }
+    }
+}
+
+impl Default for Registers {
+    fn default() -> Self {
+        Self {
+            pc: 0x34,
+            stack: 0xFD,
+            acc: 0,
+            idx_x: 0,
+            idx_y: 0,
+            status: Status::empty(),
+        }
+    }
 }

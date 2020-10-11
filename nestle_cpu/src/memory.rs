@@ -225,6 +225,18 @@ impl Memory {
     pub fn iter_range(&self, range: RangeInclusive<usize>) -> impl Iterator<Item = &u8> {
         self.data[range].iter()
     }
+
+    pub fn iter_chunk(
+        &self,
+        range: RangeInclusive<usize>,
+        chunk_size: usize,
+    ) -> impl Iterator<Item = &[u8]> {
+        self.data[range].chunks(chunk_size)
+    }
+
+    pub fn pprint_memory(&self, range: RangeInclusive<usize>) {
+        crate::utils::pprint_binaries(&self.data, range);
+    }
 }
 
 #[cfg(test)]

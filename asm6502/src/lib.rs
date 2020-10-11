@@ -1,16 +1,12 @@
 mod instructions;
+mod iter;
 
 pub use crate::instructions::{Instruction, Opcode};
+pub use crate::iter::opcodes;
 
 pub fn dump(data: Vec<u8>) -> Vec<Opcode> {
-    let mut peekable = data.iter().peekable();
-    let mut result = Vec::new();
-
-    while let Some(op) = Opcode::from_peekable(&mut peekable) {
-        result.push(op);
-    }
-
-    result
+    let opcodes = opcodes(data.iter().peekable());
+    opcodes.collect::<Vec<_>>()
 }
 
 pub fn prettyprint(opcodes: Vec<Opcode>) {

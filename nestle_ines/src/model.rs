@@ -1,4 +1,7 @@
-use binread::BinRead;
+use anyhow::{anyhow, Context, Result};
+use binread::{BinRead, BinReaderExt};
+use std::fs::File;
+use std::path::Path;
 
 #[derive(Debug, BinRead)]
 pub struct Ines {
@@ -16,6 +19,13 @@ pub struct Ines {
 }
 
 impl Ines {
+    pub fn from_path(path: &Path) -> Result<Self> {
+        let mut reader = File::open(path)?;
+        reader
+            .read_le()
+            .map_err(|e| anyhow!("unable to load ROM from '{}': {}", path.display(), e))
+    }
+
     #[cfg(test)]
     fn dump(&self) -> Vec<u8> {
         let mut result = Vec::new();
