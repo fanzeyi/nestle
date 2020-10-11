@@ -24,17 +24,17 @@ impl AddressMode {
         match self {
             Implicit => 1,
             Accumulator => 1,
-            Immediate(u8) => 2,
-            Zero(u8) => 2,
-            ZeroX(u8) => 2,
-            ZeroY(u8) => 2,
-            Relative(i8) => 2,
-            Absolute(u16) => 3,
-            AbsoluteX(u16) => 3,
-            AbsoluteY(u16) => 3,
-            Indirect(u16) => 3,
-            IndirectX(u8) => 2,
-            IndirectY(u8) => 2,
+            Immediate(_) => 2,
+            Zero(_) => 2,
+            ZeroX(_) => 2,
+            ZeroY(_) => 2,
+            Relative(_) => 2,
+            Absolute(_) => 3,
+            AbsoluteX(_) => 3,
+            AbsoluteY(_) => 3,
+            Indirect(_) => 3,
+            IndirectX(_) => 2,
+            IndirectY(_) => 2,
         }
     }
 }
@@ -536,7 +536,6 @@ pub struct TYA(AddressMode);
 fn test_adc() {
     use AddressMode::*;
 
-    println!("{}", ADC::from_bytes(b"\x69\xc4").unwrap());
     assert_eq!(ADC::from_bytes(b"\x69\x01").unwrap(), ADC(Immediate(0x01)));
     assert_eq!(ADC::from_bytes(b"\x65\x01").unwrap(), ADC(Zero(0x01)));
     assert_eq!(ADC::from_bytes(b"\x75\x01").unwrap(), ADC(ZeroX(0x01)));

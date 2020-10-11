@@ -1,5 +1,4 @@
 mod instructions;
-mod parser;
 
 pub use crate::instructions::{Instruction, Opcode};
 

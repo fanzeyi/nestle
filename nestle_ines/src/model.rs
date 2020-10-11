@@ -2,16 +2,16 @@ use binread::BinRead;
 
 #[derive(Debug, BinRead)]
 pub struct Ines {
-    header: InesHeader,
+    pub header: InesHeader,
 
     #[br(if(header.mapper & 0b00100000 != 0), count=512)]
-    trainer: Option<Vec<u8>>,
+    pub trainer: Option<Vec<u8>>,
 
     #[br(count = (header.prg_size as u32) * 16384)]
-    prg: Vec<u8>,
+    pub prg: Vec<u8>,
 
     #[br(if(header.chr_size != 0), count = (header.chr_size as u32) * 8192)]
-    chr: Option<Vec<u8>>,
+    pub chr: Option<Vec<u8>>,
     // PlayChoice fields ..
 }
 
@@ -49,10 +49,10 @@ impl Default for Ines {
 #[derive(Debug, BinRead)]
 #[br(magic = b"NES\x1a")]
 pub struct InesHeader {
-    prg_size: u8, // 4
-    chr_size: u8, // 5
-    mapper: u8,   // 6
-    extra: [u8; 9],
+    pub prg_size: u8, // 4
+    pub chr_size: u8, // 5
+    pub mapper: u8,   // 6
+    pub extra: [u8; 9],
 }
 
 impl InesHeader {

@@ -7,7 +7,8 @@ use std::path::{Path, PathBuf};
 fn execute_bin(path: &Path) -> Result<()> {
     dbg!(path);
     let mut reader = File::open(path)?;
-    let _ines: Ines = reader.read_le().unwrap();
+    let ines: Ines = reader.read_le().unwrap();
+    println!("prg: {}", ines.prg.len());
     Ok(())
 }
 
